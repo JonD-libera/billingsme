@@ -200,7 +200,7 @@ def select_character_class():
         print("Invalid selection. Please select a valid class number.")
         return select_character_class()  # Recursively prompt until a valid selection is made
 
-def print_with_delay(text, delay=1/100):
+def print_with_delay(text, delay=1/50):
     for char in text:
         print(char, end='', flush=True)
         time.sleep(delay)
@@ -208,7 +208,7 @@ def print_with_delay(text, delay=1/100):
 
 def main():
     setup_database()
-    print_with_delay('Welcome to Billing Sme Simulator!!\n The day... February 28th, 2019.\n The mission... to bill all the customers before midnight.')
+    print_with_delay('Welcome to Billing Sme Simulator 2019 I!!\n The day... February 28th, 2019.\n The mission... to bill all the customers before midnight.')
     print()
     
     character_class=start_new_game()
