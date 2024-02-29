@@ -33,15 +33,19 @@ def update_customer_status(name, status):
     cur.execute('UPDATE customers SET status = ? WHERE name = ?', (status, name))
     conn.commit()
 
-def convert_minutes_to_hms(minutes):
-    hours = int(minutes // 60) + START_HOUR
+def convert_minutes_to_hms(minutes, start_hour):
+    hours = int(minutes // 60) + start_hour
     minutes = int(minutes % 60)
     seconds = int((minutes - int(minutes)) * 60)
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 def simulate_billing(game_start_time, character_class):
     while True:
-        current_time = convert_minutes_to_hms((time.time()-game_start_time))
+        if character_class == "Software Developer":
+            start_time = START_HOUR - 1
+        else:
+            start_time = START_HOUR
+        current_time = convert_minutes_to_hms((time.time()-game_start_time), start_time)
         if current_time >= f"{END_HOUR}:{END_MINUTE}":
             print("Time's up! The game has ended.")
             break
@@ -56,9 +60,17 @@ def simulate_billing(game_start_time, character_class):
         failure_chance = randint(1, 100)
 
         # Simulate failures
+        fail_count = 0
         if failure_chance <= 2: 
             print(f"{current_time} - Server failure encountered for {customer_name}")
             fix_command = input("Type 'repair table cdr "+serverId+"' to fix the server failure: ").strip().lower()
+            if character_class == "Database Administrator":
+                skip_chance = randint(1, 100)
+            else:
+                skip_chance = 0
+            if skip_chance > 75:
+                print(f"{current_time} - {character_class} has quickly resolved {customer_name} due to their mad skills in database issue resolution.")
+                update_customer_status(customer_name, "completed")
             while fix_command != ("repair table cdr "+serverId).strip().lower():
                 time.sleep(3)
                 print("Incorrect command. Billing for this customer delayed. Try again.")
@@ -68,8 +80,17 @@ def simulate_billing(game_start_time, character_class):
             print(f"{current_time} - Negative invoice encountered for {customer_name}")
             fix_command = input("Type 'update invoice where customer_name = "+customer_name+"' to fix the negative invoice: ").strip().lower()
             while fix_command != ("update invoice where customer_name = "+customer_name).strip().lower():
-                print(fix_command)
+                fail_count += 1
                 time.sleep(3)
+                if fail_count > 1:
+                    print(f"You have updated the wrong record. Now you must restore from backup.")
+                    fix_command = input("Type 'mysql < backup.sql' to restore the table: ").strip().lower()
+                    while fix_command != ("mysql < backup.sql").strip().lower():
+                        time.sleep(30)
+                        print("Incorrect command. Try again.")
+                        fix_command = input("Type 'mysql < backup.sql' to restore the table: ").strip().lower()
+                    print(f"{current_time} - Backup restored.")
+                    fix_command = input("Type 'update invoice where customer_name = "+customer_name+"' to fix the negative invoice: ").strip().lower()
                 print("Incorrect command. Billing for this customer delayed. Try again.")
                 fix_command = input("Type 'update invoice where customer_name = "+customer_name+"' to fix the negative invoice: ").strip().lower()
             update_customer_status(customer_name, "completed")
@@ -113,11 +134,11 @@ def simulate_billing(game_start_time, character_class):
                 print(f"{current_time} - {character_class} has quickly resolved {customer_name} due to their mad skills in network issue resolution.")
                 update_customer_status(customer_name, "completed")
             else:
-                fix_command = input("Type 'iptables block "+customer_name+"' to fix the customer's fax machine: ").strip().lower()
+                fix_command = input("Type 'iptables block "+customer_name+"' to stop the evil traffic: ").strip().lower()
                 while fix_command != ("iptables block "+customer_name).strip().lower():
                     time.sleep(3)
                     print("Incorrect command. Billing for this customer delayed. Try again.")
-                    fix_command = input("Type 'iptables block "+customer_name+"' to fix the customer's fax machine: ").strip().lower()
+                    fix_command = input("Type 'iptables block "+customer_name+"' to stop the evil traffic: ").strip().lower()
         else:
             update_customer_status(customer_name, "completed")
         sleep_time = round(random.uniform(0, .2), 2)
